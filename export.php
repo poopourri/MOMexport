@@ -1,7 +1,21 @@
 <?php
+//Set Timezone
+date_default_timezone_set("America/Chicago");
+
+//Set Config Details
 $foxycart_domain = "poopourri.foxycart.com";
 $foxycart_api_key = "spfxd22f6593863ada65d41ad99494dfe354f8ba8f6875fba646f1db0d35fbaa419b";
-$to_email = "nealsharmon@gmail.com";
+$to_email = "david@sparkweb.net";
+//$to_email = "nealsharmon@gmail.com";
+
+//Just Yesterday
+$start_date = date("Y-m-d", strtotime("-1 day"));
+$end_date = date("Y-m-d", strtotime("-1 day"));
+
+//Lots of Days
+$start_date = date("Y-m-d", strtotime("-30 days"));
+$end_date = date("Y-m-d", strtotime("now"));
+
 
 //Includes
 require "class.phpmailer.php";
@@ -12,8 +26,8 @@ require "functions.php";
 //Setup Args
 $foxydata = array(
 	"api_action" => "transaction_list",
-	"transaction_date_filter_begin" => date("Y-m-d", strtotime("-1 day")),
-	"transaction_date_filter_end" => date("Y-m-d", strtotime("-1 day")),
+	"transaction_date_filter_begin" => $start_date,
+	"transaction_date_filter_end" => $end_date,
 );
 
 //Get Orders
@@ -54,8 +68,8 @@ foreach ($xml->transactions->transaction as $transaction) {
 	$cols['shipping'] = (double)$transaction->shipping_total;
 	$cols['email'] = substr((string)$transaction->customer_email, 0, 50);
 	$processor_response = (string)$transaction->processor_response;
-	if (strpos($processor_response, "Authorize.Net") != false) {
-		$cols['reference'] = trim(substr($processor_response, strpos($processor_response, ": ") + 1));
+	if (strpos($processor_response, "Authorize.net") !== false) {
+		$cols['reference'] = trim(substr($processor_response, strpos($processor_response, ":") + 1));
 	}
 
 	//Shipping Address
@@ -93,12 +107,12 @@ foreach ($xml->transactions->transaction as $transaction) {
 
 	//Extra Products
 	if (count($arr_products) > 5) {
-		$new_col = $cols;
+		$new_col = getFieldTitles();
 
 		$product_count = 0;
 		for ($i = 5; $i < count($arr_products); $i++) {
 			$product_count++;
-			$cols['continued'] = "Y";
+			$new_col['continued'] = "Y";
 			$new_col["product0" . $product_count] = $val['code'];
 			$new_col["quantity0" . $product_count] = $val['quantity'];
 			if ($product_count == 5) {
@@ -114,13 +128,14 @@ foreach ($xml->transactions->transaction as $transaction) {
 
 	$rows[] = $cols;
 	if (count($extra_rows) > 0) {
-		array_merge($rows, $extra_rows);
+		foreach ($extra_rows as $new_row) {
+			$rows[] = $new_row;
+		}
 	}
 
 }
 
 
-echo "<pre>";
 $write = "";
 foreach ($rows as $row) {
 	foreach ($row as $key => $val) {
@@ -171,13 +186,17 @@ $mail->AddAddress($to_email);
 $mail->Subject = "Sales Data For " . date("m/d/Y", strtotime("-1 day"));
 $mail->Body = $email_body;
 if (!$mail->Send()) {
-	echo "Email Not Sent";
+	if (!isset($_GET['neal-debug'])) {
+		echo "Email Not Sent";
+	}
 } else {
-	echo "Email Sent";
+	if (!isset($_GET['neal-debug'])) {
+		echo "Email Sent";
+	}
 }
 
 //Delete Temp File
-//unlink($localpath . $file);
+unlink($localpath . $file);
 
 //All Done
 die;
