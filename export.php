@@ -5,8 +5,8 @@ date_default_timezone_set("America/Chicago");
 //Set Config Details
 $foxycart_domain = "poopourri.foxycart.com";
 $foxycart_api_key = "spfxd22f6593863ada65d41ad99494dfe354f8ba8f6875fba646f1db0d35fbaa419b";
-$to_email = "david@sparkweb.net";
-//$to_email = "nealsharmon@gmail.com";
+//$to_email = "david@sparkweb.net";
+$to_email = "nealsharmon@gmail.com";
 
 //Just Yesterday
 $start_date = date("Y-m-d", strtotime("-1 day"));
@@ -165,32 +165,30 @@ fwrite($fp, $write);
 fclose($fp);
 
 
-//Prepare Email
-$email_body = "The sales import file for " . date("m/d/Y", strtotime("-1 day")) . " is attached to this email.\n<br>";
-$email_attachment = $localpath . $file;
+//Prepare and send email (only if debug mode is false)
+if (!isset($_GET['neal-debug'])) {
+	$email_body = "The sales import file for " . date("m/d/Y", strtotime("-1 day")) . " is attached to this email.\n<br>";
+	$email_attachment = $localpath . $file;
 
-$mail = new PHPMailer();
+	$mail = new PHPMailer();
 
-//Attachment
-if (isset($email_attachment)) {
-	if (!is_array($email_attachment)) $email_attachment = array($email_attachment);
-	foreach ($email_attachment as $current_email_attachment) {
-		$mail->AddAttachment($current_email_attachment);
+	//Attachment
+	if (isset($email_attachment)) {
+		if (!is_array($email_attachment)) $email_attachment = array($email_attachment);
+		foreach ($email_attachment as $current_email_attachment) {
+			$mail->AddAttachment($current_email_attachment);
+		}
 	}
-}
 
-$mail->isHTML(true);
-$mail->CharSet = "UTF-8";
-$mail->SetFrom($to_email, "Order Management");
-$mail->AddAddress($to_email);
-$mail->Subject = "Sales Data For " . date("m/d/Y", strtotime("-1 day"));
-$mail->Body = $email_body;
-if (!$mail->Send()) {
-	if (!isset($_GET['neal-debug'])) {
+	$mail->isHTML(true);
+	$mail->CharSet = "UTF-8";
+	$mail->SetFrom($to_email, "Order Management");
+	$mail->AddAddress($to_email);
+	$mail->Subject = "Sales Data For " . date("m/d/Y", strtotime("-1 day"));
+	$mail->Body = $email_body;
+	if (!$mail->Send()) {
 		echo "Email Not Sent";
-	}
-} else {
-	if (!isset($_GET['neal-debug'])) {
+	} else {
 		echo "Email Sent";
 	}
 }

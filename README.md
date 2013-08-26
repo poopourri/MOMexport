@@ -3,12 +3,9 @@ MOMexport
 
 ## Setup
 
-To run this auto exporter, point your cron job to:
+To run this auto exporter, point your cron job to: `path/export.php`
 
-`path/export.php`
+## Testing and Debug
 
-## Testing
-
-To see a live export of yesterday's orders, go to:
-
-`path/export.php?neal-debug=1`
+To see a live export of yesterday's orders, go to: `path/export.php?neal-debug=1`
+Email will not be sent.
