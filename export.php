@@ -42,6 +42,9 @@ foreach ($xml->transactions->transaction as $transaction) {
 	$cols = getFieldTitles();
 	$extra_rows = array();
 
+	//Basics
+	$cols['source_key'] = "harmon";
+
 	//Billing Address
 	$cols['firstname'] = (string)$transaction->customer_first_name;
 	$cols['lastname'] = (string)$transaction->customer_last_name;
