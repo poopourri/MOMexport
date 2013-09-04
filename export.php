@@ -95,6 +95,7 @@ foreach ($xml->transactions->transaction as $transaction) {
 		$arr_products[] = array(
 			"code" => (string)$transaction_detail->product_code,
 			"quantity" => (int)$transaction_detail->product_quantity,
+			"price" => (int)$transaction_detail->product_price,
 		);
 	}
 
@@ -105,6 +106,7 @@ foreach ($xml->transactions->transaction as $transaction) {
 		if ($product_count > 5) continue;
 		$cols["product0" . $product_count] = $val['code'];
 		$cols["quantity0" . $product_count] = $val['quantity'];
+		$cols["price0" . $product_count] = $val['price'];
 	}
 
 
@@ -118,6 +120,7 @@ foreach ($xml->transactions->transaction as $transaction) {
 			$new_col['continued'] = "Y";
 			$new_col["product0" . $product_count] = $val['code'];
 			$new_col["quantity0" . $product_count] = $val['quantity'];
+			$new_col["price0" . $product_count] = $val['price'];
 			if ($product_count == 5) {
 				$product_count = 0;
 				$extra_rows[] = $new_col;
