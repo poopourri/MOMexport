@@ -80,7 +80,7 @@ foreach ($xml->transactions->transaction as $transaction) {
 	$cols['sfirstname'] = (string)$transaction->shipping_first_name;
 	$cols['slastname'] = (string)$transaction->shipping_last_name;
 	$cols['scompany'] = (string)$transaction->shipping_company;
-	$cols['saddress1'] = (string)$transaction->shippng_address1;
+	$cols['saddress1'] = (string)$transaction->shipping_address1;
 	$cols['saddress2'] = (string)$transaction->shipping_address2;
 	$cols['scity'] = (string)$transaction->shipping_city;
 	$cols['sstate'] = (string)$transaction->shipping_state;
