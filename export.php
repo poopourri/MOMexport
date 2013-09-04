@@ -80,7 +80,7 @@ foreach ($xml->transactions->transaction as $transaction) {
 	$cols['sfirstname'] = (string)$transaction->shipping_first_name;
 	$cols['slastname'] = (string)$transaction->shipping_last_name;
 	$cols['scompany'] = (string)$transaction->shipping_company;
-	$cols['saddress1'] = (string)$transaction->bshippng_address1;
+	$cols['saddress1'] = (string)$transaction->shippng_address1;
 	$cols['saddress2'] = (string)$transaction->shipping_address2;
 	$cols['scity'] = (string)$transaction->shipping_city;
 	$cols['sstate'] = (string)$transaction->shipping_state;
@@ -88,7 +88,6 @@ foreach ($xml->transactions->transaction as $transaction) {
 	$cols['scountry'] = get_country_code((string)$transaction->shipping_country);
 	$cols['sphone'] = substr((string)$transaction->shipping_phone, 0, 18);
 	$cols['semail'] = substr((string)$transaction->customer_email, 0, 50);
-
 
 	//Products
 	$arr_products = array();
