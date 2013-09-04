@@ -44,6 +44,7 @@ foreach ($xml->transactions->transaction as $transaction) {
 
 	//Basics
 	$cols['source_key'] = "harmon";
+	$cols['sales_id'] = "har";
 
 	//Billing Address
 	$cols['firstname'] = (string)$transaction->customer_first_name;
@@ -63,7 +64,7 @@ foreach ($xml->transactions->transaction as $transaction) {
 	//Order Details
 	$cols['paid'] = (double)$transaction->order_total;
 	$cols['continued'] = "";
-	$cols['order_date'] = date("Ymd", strtotime((string)$transaction->order_total));
+	$cols['order_date'] = date("Ymd", strtotime((string)$transaction->transaction_date));
 	$cols['odr_num'] = (string)$transaction->id;
 	$cols['paymethod'] = "cc";
 	$cols['useshipamt'] = "Y";
