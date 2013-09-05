@@ -1,20 +1,36 @@
 <?php
-//Set Timezone
+//Set Timezone and errors
 date_default_timezone_set("America/Chicago");
 
 //Set Config Details
 $foxycart_domain = "poopourri.foxycart.com";
 $foxycart_api_key = "spfxd22f6593863ada65d41ad99494dfe354f8ba8f6875fba646f1db0d35fbaa419b";
-//$to_email = "david@sparkweb.net";
-$to_email = "nealsharmon@gmail.com";
+$entries_per_page = 300;
+
+//Email Settings
+//$to_email = "david@sparkweb.net"; //testing
+//$to_email = "nealsharmon@gmail.com"; //testing
+$to_email = "janette@poopourri.net";
+$cc_email = "todd@poopourri.net";
+
+
+//Setup Pagination
+$pagination_start = 1;
+if (isset($_GET['pagination_start'])) {
+	$pagination_start = (int)$_GET['pagination_start'];
+}
 
 //Just Yesterday
 $start_date = date("Y-m-d", strtotime("-1 day"));
 $end_date = date("Y-m-d", strtotime("-1 day"));
 
-//Lots of Days
-$start_date = date("Y-m-d", strtotime("-30 days"));
-$end_date = date("Y-m-d", strtotime("now"));
+//Today **testing
+//$start_date = date("Y-m-d");
+//$end_date = date("Y-m-d");
+
+//Lots of Days **testing
+//$start_date = date("Y-m-d", strtotime("-30 days"));
+//$end_date = date("Y-m-d", strtotime("now"));
 
 
 //Includes
@@ -26,18 +42,34 @@ require "functions.php";
 //Setup Args
 $foxydata = array(
 	"api_action" => "transaction_list",
+	"is_test_filter" => 0,
 	"transaction_date_filter_begin" => $start_date,
 	"transaction_date_filter_end" => $end_date,
+	"pagination_start" => $pagination_start,
+	"entries_per_page" => $entries_per_page,
 );
 
 //Get Orders
 $foxy_response = foxyshop_get_foxycart_data($foxydata, $foxycart_domain, $foxycart_api_key);
 $xml = simplexml_load_string($foxy_response, NULL, LIBXML_NOCDATA);
 
+//Stop On Error
+if ((string)$xml->result == "ERROR") {
+	foreach ($xml->messages->message as $message) {
+		echo $message . "\n";
+	}
+	die;
+}
+
 //Setup Rows
 $rows = array();
 $rows[] = array_keys(getFieldTitles());
 
+//Setup Statistics
+$pagination_end = (int)$xml->statistics->pagination_end;
+$filtered_total = (int)$xml->statistics->filtered_total;
+
+//For Each Order
 foreach ($xml->transactions->transaction as $transaction) {
 	$cols = getFieldTitles();
 	$extra_rows = array();
@@ -46,6 +78,10 @@ foreach ($xml->transactions->transaction as $transaction) {
 	$cols['source_key'] = "harmon";
 	$cols['sales_id'] = "har";
 	$cols['shipvia'] = "PM";
+	$cols['continued'] = "";
+	$cols['paymethod'] = "cc";
+	$cols['useshipamt'] = "Y";
+	$cols['internet'] = "T";
 
 	//Billing Address
 	$cols['firstname'] = (string)$transaction->customer_first_name;
@@ -64,12 +100,8 @@ foreach ($xml->transactions->transaction as $transaction) {
 
 	//Order Details
 	$cols['paid'] = (double)$transaction->order_total;
-	$cols['continued'] = "";
 	$cols['order_date'] = date("Ymd", strtotime((string)$transaction->transaction_date));
 	$cols['odr_num'] = (string)$transaction->id;
-	$cols['paymethod'] = "cc";
-	$cols['useshipamt'] = "Y";
-	$cols['internet'] = "T";
 	$cols['shipping'] = (double)$transaction->shipping_total;
 	$cols['email'] = substr((string)$transaction->customer_email, 0, 50);
 	$processor_response = (string)$transaction->processor_response;
@@ -179,6 +211,8 @@ if (!isset($_GET['neal-debug'])) {
 
 	$mail = new PHPMailer();
 
+	$subject = "Sales Data For " . date("m/d/Y", strtotime("-1 day")) . " (" . $pagination_start . "-" . $pagination_end . ")";
+
 	//Attachment
 	if (isset($email_attachment)) {
 		if (!is_array($email_attachment)) $email_attachment = array($email_attachment);
@@ -191,17 +225,38 @@ if (!isset($_GET['neal-debug'])) {
 	$mail->CharSet = "UTF-8";
 	$mail->SetFrom($to_email, "Order Management");
 	$mail->AddAddress($to_email);
-	$mail->Subject = "Sales Data For " . date("m/d/Y", strtotime("-1 day"));
+	if (isset($cc_email)) {
+		$mail->AddCC($cc_email);
+	}
+	$mail->Subject = $subject;
 	$mail->Body = $email_body;
 	if (!$mail->Send()) {
-		echo "Email Not Sent";
+		echo "Email Not Sent\n";
 	} else {
-		echo "Email Sent";
+		echo "Email Sent (" . $pagination_start . "-" . $pagination_end . ")\n";
 	}
 }
 
 //Delete Temp File
 unlink($localpath . $file);
+
+//Keep Going if Paging Isn't Done
+if ($pagination_end < $filtered_total) {
+	$url = "http://" . $_SERVER['HTTP_HOST'] . $_SERVER['SCRIPT_NAME'] . "?pagination_start=" . ($pagination_end + 1);
+	$ch = curl_init();
+	curl_setopt($ch, CURLOPT_URL, $url);
+	curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
+	curl_setopt($ch, CURLOPT_FOLLOWLOCATION, 1);
+	curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, 0);
+	echo curl_exec($ch);
+	$info = curl_getinfo($ch);
+
+	//Show Diagnostic Info
+	//echo "<pre>" . print_r($info, 1) . "</pre>";
+	//echo "<pre>" . print_r($xml->statistics, 1) . "</pre>";
+
+}
+
 
 //All Done
 die;
